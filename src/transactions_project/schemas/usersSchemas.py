@@ -14,3 +14,9 @@ class User(Login):
     created_at: datetime
     update_at: Optional[datetime] = None
 
+class UserId(BaseModel):
+    id: int
+
+class UpdateUser(Login):
+    id: int
+

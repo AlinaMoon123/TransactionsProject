@@ -6,8 +6,8 @@ class Transactions(Base):
     __tablename__="transactions"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("user.id"))
-    type_id = Column(Integer, ForeignKey("transactionType.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    type_id = Column(Integer, ForeignKey("transactionTypes.id"))
     amount = Column(Numeric, nullable=False)
     category = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

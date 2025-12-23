@@ -11,19 +11,27 @@ def register(user: CreateUser , db: Session = Depends(get_db)):
     return db_user
 
 
-@router.get('/user')
-def login():
-    pass
+@router.get('/user/{user_id}')
+def get_user(user_id: int, db: Session =Depends(get_db)):
+    db_user = get_user_by_id(user_id, db)
+    return db_user
+
+@router.post('/login', response_model=User)
+def login(user: Login , db: Session = Depends(get_db)):
+    db_user = user_login(user, db)
+    return db_user
+    
+
+@router.patch('/user/{user_id}')
+def update(user_id: int, user: Login, db: Session =Depends(get_db)):
+    db_user = update_user(user_id, user,  db)
+    return db_user
 
 
-@router.patch('/user')
-def update():
-    pass
-
-
-@router.delete('/user')
-def delete_user():
-    pass
+@router.delete('/user', response_model = UserId)
+def delete_user(user_id: int , db: Session = Depends(get_db)):
+    deleted_user_id = user_delete(user_id, db)
+    return {"id": deleted_user_id}
 
 
 
