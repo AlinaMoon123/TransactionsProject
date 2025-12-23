@@ -3,7 +3,7 @@ from sqlalchemy import *
 from src.transactions_project.db.base import Base
 
 class TransactionTypes(Base):
-    __tablename__ = "transactionTypes"
+    __tablename__ = "transactiontypes"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
