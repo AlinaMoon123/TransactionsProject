@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import *
+from sqlalchemy import Column, DateTime, Integer, String 
 from src.transactions_project.db.base import Base
 
 class TransactionTypes(Base):

@@ -1,21 +1,34 @@
 from src.transactions_project.models.transactionTypes import TransactionTypes
 from src.transactions_project.schemas.transactionsSchemas import *
-from sqlalchemy.orm import Session
 from src.transactions_project.models.transactions import Transactions
-from sqlalchemy import delete
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-def create(transaction: CreateTransaction, db: Session):
-    db_transaction = Transactions(user_id=transaction.user_id, type_id=transaction.type_id, amount = transaction.amount, category = transaction.category, status = transaction.status)
+async def create(transaction: CreateTransaction, cur_user_id: int, db: AsyncSession):
+    db_transaction = Transactions(user_id=cur_user_id, type_id=transaction.type_id, amount = transaction.amount, category = transaction.category, status = transaction.status)
     db.add(db_transaction)
-    db.commit()
-    db.refresh(db_transaction)
+    await db.commit()
+    await db.refresh(db_transaction)
     return db_transaction
 
-def deleteTransaction(transaction_id: int, db: Session):
+
+async def deleteTransaction(transaction_id: int, db: AsyncSession):
     stmt = delete(Transactions).where(Transactions.id == transaction_id)
-    db.execute(stmt)
-    db.commit()
+    await db.execute(stmt)
+    await db.commit()
     return transaction_id
 
-def findTransactionById(transaction_id: int, db: Session):
-    return db.query(Transactions).filter(Transactions.id==transaction_id).first()
+
+async def findTransactionById(transaction_id: int, db: AsyncSession):
+    stmt = select(Transactions).where(Transactions.id==transaction_id)
+    res = await db.execute(stmt)
+    return res.scalars().first()
+    
+
+
+async def findTransactions(user_id: int, db: AsyncSession):
+    stmt = select(Transactions).where(Transactions.user_id == user_id)
+    result = await db.execute(stmt)
+    trans = result.scalars().all()
+    print(trans)
+    return trans

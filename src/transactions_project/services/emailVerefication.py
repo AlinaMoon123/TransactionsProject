@@ -1,29 +1,31 @@
 from email.message import EmailMessage
-import os
-import smtplib
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-from src.transactions_project.db.tokenBase import redis_client
+import aiosmtplib
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.transactions_project.db.codeBase import redis_client
 from src.transactions_project.crud.usersCrud import activateUser
+from src.transactions_project.core.exception import CustomExc
+from src.transactions_project.core.config import SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER
 
-SMTP_HOST=os.getenv("SMTP_HOST")
-SMTP_PORT=int(os.getenv("SMTP_PORT"))
-SMTP_USER=os.getenv("SMTP_USER")
-SMTP_PASSWORD=os.getenv("SMTP_PASSWORD")
-
-def send_email(to_email: str, subject: str, body: str):
+async def send_email(to_email: str, subject: str, body: str):
     msg = EmailMessage()
     msg["From"] = SMTP_USER
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.set_content(body)
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
-        server.starttls()            
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.send_message(msg)
+    server = aiosmtplib.SMTP(
+    hostname=SMTP_HOST,
+    port=SMTP_PORT,
+    timeout=10
+    )
 
-def send_verefication_code(to_email: str, code: str):
+    await server.connect()
+    await server.login(SMTP_USER, SMTP_PASSWORD)
+    await server.send_message(msg)
+    await server.quit()
+
+
+async def send_verefication_code(to_email: str, code: str):
     subject = "Verefication Code"
     body = f"""
             Здравствуйте!
@@ -34,16 +36,16 @@ def send_verefication_code(to_email: str, code: str):
 
             Код действует 15 минут.
             """
-    send_email(to_email, subject, body)
+    await send_email(to_email, subject, body)
 
 
-def check_verification_code(email: str, code: str, db: Session):
-    stored_code = redis_client.get(f'verify:{email}')
+async def check_verification_code(email: str, code: str, db: AsyncSession):
+    stored_code = await redis_client.get(f'verify:{email}')
     if stored_code == None:
-        raise HTTPException(status_code=400, detail="Verification code expired")
+        raise CustomExc(status_code=400, detail="Verification code expired")
     if stored_code == code:
-        db_user = activateUser(email, db)
-        redis_client.delete(email)
+        db_user = await activateUser(email, db)
+        await redis_client.delete(email)
         return db_user
-    raise HTTPException(status_code=400, detail="The code is wrong! Try again!")
+    raise CustomExc(status_code=400, detail="The code is wrong! Try again!")
 

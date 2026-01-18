@@ -1,21 +1,20 @@
-import os
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-# URL_DATABASE = "postgresql://postgres:123123@localhost:5432/TransactionsProject"
-DATABASE_URL = os.getenv("DATABASE_URL")
+from src.transactions_project.core.config import DATABASE_URL
 
-engine = create_engine(DATABASE_URL)
+engine = create_async_engine(url=DATABASE_URL)
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = async_sessionmaker(class_=AsyncSession, bind=engine, expire_on_commit=False)
 
 Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db():
+    async with SessionLocal() as db:
+        try:
+            yield db
+        except:
+            await db.rollback()
+        finally:
+            await db.close()
 

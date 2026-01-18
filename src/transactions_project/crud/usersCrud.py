@@ -1,40 +1,46 @@
 from datetime import timezone
+from sqlalchemy import select
 from src.transactions_project.schemas.usersSchemas import *
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.transactions_project.models.users import Users
 from src.transactions_project.models import users
 
-def create(user: CreateUser, db: Session):
-    db_user = Users(name = user.name, password = user.password, email = user.email)
+async def create(user: CreateUser, db: AsyncSession):
+    db_user = Users(name=user.name, password=user.password, email=user.email)
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
     return db_user
 
     
-def findUser(email: str, password: str, db: Session):
-    return db.query(Users).filter(Users.email==email, Users.password == password).first()
+async def findUser(email: str, password: str, db: AsyncSession):
+    stmt=select(Users).where(Users.email==email, Users.password==password)
+    res=await db.execute(stmt)
+    return res.scalars().first()
 
-# def getPassword(password: str, db: Session):
-#     return db.query
-
-def deleteUser(user: Users, db: Session):
-    user_id = user.id
-    db.delete(user)
-    db.commit()
+async def deleteUser(user: Users, db: AsyncSession):
+    user_id=user.id
+    await db.delete(user)
+    await db.commit()
     return user_id
 
-def findUserById(user_id: int, db: Session):
-    return db.query(Users).filter(Users.id==user_id).first()
+async def findUserById(user_id: int, db: AsyncSession):
+    stmt=select(Users).where(Users.id==user_id)
+    res=await db.execute(stmt)
+    return res.scalars().first()
 
-def findSameEmail(user_id: int, email: str, db: Session):
-    return db.query(Users).filter(Users.id!=user_id, Users.email==email).first()
+async def findSameEmail(user_id: int, email: str, db: AsyncSession):
+    stmt=select(Users).where(Users.id!=user_id, Users.email==email)
+    res=await db.execute(stmt)
+    return res.scalars().first()
 
-def findEmail(email: str, db: Session):
-    return db.query(Users).filter(Users.email==email).first()
+async def findEmail(email: str, db: AsyncSession):
+    stmt=select(Users).where(Users.email==email)
+    res=await db.execute(stmt)
+    return res.scalars().first()
 
-def update(user_id: int, user: UpdateUser, db: Session):
-    db_user = findUserById(user_id, db)
+async def update(user_id: int, user: UpdateUser, db: AsyncSession):
+    db_user = await findUserById(user_id, db)
     if user.email != None:
         db_user.email = user.email
     if user.name != None:
@@ -45,12 +51,12 @@ def update(user_id: int, user: UpdateUser, db: Session):
     if user.email == None and user.name == None and user.password == None:
         update_time = db_user.update_at
     db_user.update_at = update_time
-    db.commit()
-    db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
     return db_user
 
-def activateUser(email: int, db: Session):
-    db_user = findEmail(email, db)
+async def activateUser(email: int, db: AsyncSession):
+    db_user = await findEmail(email, db)
     db_user.is_active = True
-    db.commit()
+    await db.commit()
     return db_user

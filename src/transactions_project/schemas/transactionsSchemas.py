@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 class CreateTransaction(BaseModel):
-    user_id: int
     type_id: int
     amount: int
     category: str
@@ -12,3 +11,6 @@ class CreateTransaction(BaseModel):
 class Transaction(CreateTransaction):
     id: int
     creater_at: datetime
+
+    class Config:
+        from_attributes = True
