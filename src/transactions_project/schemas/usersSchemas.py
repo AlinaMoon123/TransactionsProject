@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Optional
 from fastapi import HTTPException
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 class Login(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 class CreateUser(Login):
@@ -23,12 +23,12 @@ class UserId(BaseModel):
 
 class UpdateUser(BaseModel):
     name: Optional[str] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     password: Optional[str] = None
 
     @field_validator("name", "email", "password")
     @classmethod
-    def not_empty_fields(cls, value: Optional[str]):
+    def not_empty_fields(cls, value):
         if value is None:
             return value
         if not value.strip():
@@ -42,7 +42,6 @@ class UpdateUser(BaseModel):
             raise HTTPException(status_code=400, detail="At least one field must be provided")
         return self
            
-# TODO написать кастомный валидатор (@field_validator) и если ничего не ввёл то 400 Bad Request
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -52,5 +51,5 @@ class ActivateUser(BaseModel):
     message: str 
 
 class CodeInput(BaseModel):
-    email: str
+    email: EmailStr
     code: str

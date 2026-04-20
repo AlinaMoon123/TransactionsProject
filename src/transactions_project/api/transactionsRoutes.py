@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, status
 from src.transactions_project.services.transactions import *
 from src.transactions_project.db.base import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,9 +10,10 @@ from src.transactions_project.auth.jwt import get_current_user
 router = APIRouter(prefix='/transactions', tags=["Транзакции"])
 
 
-@router.post("")
-async def endpoint(transaction: CreateTransaction, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def endpoint(transaction: CreateTransaction, request: Request, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     db_transaction = await create_transaction(transaction, current_user.id, db)
+    request.headers
     return db_transaction
 
 
@@ -26,5 +27,3 @@ async def endpoint(transaction_id: int , current_user: User = Depends(get_curren
 async def endpoint(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     transactions = await get_all_transactions(current_user.id, db)
     return transactions
-
-# TODO перевести весь код в async/await 

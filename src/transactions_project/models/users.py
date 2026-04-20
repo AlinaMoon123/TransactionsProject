@@ -11,6 +11,6 @@ class Users(Base):
     name = Column(String, nullable=False)
     password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    update_at = Column(DateTime, nullable=True)
+    update_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=False)
 

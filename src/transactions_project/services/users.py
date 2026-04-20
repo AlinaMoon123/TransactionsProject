@@ -3,8 +3,9 @@ from fastapi import HTTPException
 from sqlalchemy import update
 from src.transactions_project.schemas.usersSchemas import CreateUser, Login  
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.transactions_project.crud.usersCrud import create, deleteUser, findEmail, findSameEmail, findUser, findUserById 
+from src.transactions_project.crud.usersCrud import create, deleteUser, findEmail, findSameEmail, findUser, findUserById, update_db 
 from src.transactions_project.auth.jwt import create_access_token
+from src.transactions_project.services.security import check_password, hash_password
 
 async def create_user(user: CreateUser, db: AsyncSession):
     db_email = await findEmail(user.email, db)
@@ -16,9 +17,9 @@ async def create_user(user: CreateUser, db: AsyncSession):
     raise HTTPException(status_code=400, detail = "The passwords dont match")
 
 async def user_login(email: str, password: str, db: AsyncSession):
-    db_user = await findUser(email, password, db)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    db_user = await findUser(email, db)
+    if not db_user or not check_password(password, db_user.password):
+        raise HTTPException(status_code=401, detail="Wrong login or password")
     access_token=create_access_token(db_user.id)
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -40,7 +41,7 @@ async def update_user(user_id: int, user: Login, db: AsyncSession):
     same_psw = await findSameEmail(user_id, user.email, db)
     if same_psw:
         raise HTTPException(status_code=409, detail="User with this email is exist")
-    updated_db_user = await update(user_id, user, db)
+    updated_db_user = await update_db(user_id, user, db)
     return updated_db_user
 
 def generate_code():

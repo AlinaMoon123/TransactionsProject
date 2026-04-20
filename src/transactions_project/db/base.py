@@ -13,8 +13,6 @@ async def get_db():
     async with SessionLocal() as db:
         try:
             yield db
-        except:
-            await db.rollback()
         finally:
             await db.close()
 
